@@ -130,8 +130,6 @@ def setTheme_():  # 设置主题
             except AttributeError:
                 # 无法获取版本信息，保守返回
                 return
-        if platform.system() == 'Linux':
-            return
         setTheme(Theme.AUTO)
     elif conf.read_conf('General', 'color_mode') == '1':
         setTheme(Theme.DARK)
