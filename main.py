@@ -33,7 +33,7 @@ import tip_toast
 from tip_toast import active_windows
 import utils
 import weather as db
-from conf import base_directory
+from conf import base_directory, load_theme_config
 from extra_menu import ExtraMenu, open_settings
 from generate_speech import generate_speech_sync, list_pyttsx3_voices
 from menu import open_plaza
@@ -42,7 +42,7 @@ from weather import WeatherReportThread as weatherReportThread
 from weather import get_unified_weather_alerts, get_alert_image
 from play_audio import play_audio
 from plugin import p_loader
-from utils import restart, stop, share, update_timer, DarkModeWatcher
+from utils import restart, stop, share, update_timer, DarkModeWatcher, TimeManagerFactory
 from file import config_center, schedule_center
 
 if os.name == 'nt':
@@ -87,7 +87,6 @@ weather_data_temp = None
 city = 101010100  # 默认城市
 theme = None
 
-time_offset = 0  # 时差偏移
 first_start = True
 error_cooldown = dt.timedelta(seconds=2)  # 冷却时间(s)
 ignore_errors = []
@@ -218,9 +217,10 @@ def get_start_time() -> None:
                 logger.error(f'加载课程表文件[节点类型]出错：{e}')
                 part_type = 'part'
 
-            # 应用时差偏移到课程表时间
-            start_time = dt.datetime.combine(today, dt.time(h, m)) + dt.timedelta(seconds=time_offset)
-            parts_start_time.append(start_time)
+            # 使用基础时间，不应用偏移（偏移在比较时统一处理）
+            current_time_manager = TimeManagerFactory.get_instance()
+            base_time = dt.datetime.combine(current_time_manager.get_today(), dt.time(h, m))
+            parts_start_time.append(base_time)
             order.append(item_name)
             parts_type.append(part_type)
         except Exception as e:
@@ -265,10 +265,17 @@ def get_part() -> Optional[Tuple[dt.datetime, int]]:
         return None
 
     def return_data():
-        c_time = parts_start_time[i]
+        base_time = parts_start_time[i]
+        current_manager = TimeManagerFactory.get_instance()
+        c_time = current_manager.get_current_time().replace(
+            hour=base_time.hour,
+            minute=base_time.minute,
+            second=base_time.second,
+            microsecond=base_time.microsecond
+        )
         return c_time, int(order[i])  # 返回开始时间、Part序号
 
-    current_dt = dt.datetime.now() # 当前时间
+    current_dt = TimeManagerFactory.get_instance().get_current_time() # 当前时间
 
     for i in range(len(parts_start_time)):  # 遍历每个Part
         time_len = dt.timedelta(minutes=0)  # Part长度
@@ -282,10 +289,19 @@ def get_part() -> Optional[Tuple[dt.datetime, int]]:
             if i == len(parts_start_time) - 1:  # 最后一个Part
                 return return_data()
             else:
-                if current_dt <= parts_start_time[i] + time_len:
+                # 将基础时间转换为当前时间基准进行比较
+                base_time = parts_start_time[i]
+                current_manager = TimeManagerFactory.get_instance()
+                adjusted_start_time = current_manager.get_current_time().replace(
+                    hour=base_time.hour,
+                    minute=base_time.minute,
+                    second=base_time.second,
+                    microsecond=base_time.microsecond
+                )
+                if current_dt <= adjusted_start_time + time_len:
                     return return_data()
 
-    return parts_start_time[0] + dt.timedelta(seconds=time_offset), 0, 'part'
+    return parts_start_time[0], 0
 
 def get_excluded_lessons() -> None:
     global excluded_lessons
@@ -333,7 +349,7 @@ def get_current_lessons() -> None:  # 获取当前课程
 # 获取倒计时、弹窗提示
 def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # 重构好累aaaa
     global last_notify_time
-    current_dt = dt.datetime.now()
+    current_dt = TimeManagerFactory.get_instance().get_current_time()
     if last_notify_time and (current_dt - last_notify_time).seconds < notify_cooldown:
         return
     def after_school():  # 放学
@@ -343,7 +359,7 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
             if config_center.read_conf('Toast', 'after_school') == '1':
                 notification.push_notification(2)  # 放学
 
-    current_dt = dt.datetime.combine(today, dt.datetime.strptime(current_time, '%H:%M:%S').time())  # 当前时间
+    current_dt = TimeManagerFactory.get_instance().get_current_time()  # 当前时间
     return_text = []
     got_return_data = False
 
@@ -418,7 +434,7 @@ def get_countdown(toast: bool = False) -> Optional[List[Union[str, int]]]:  # �
                         if lesson_name != '暂无课程':
                             next_lesson_name = lesson_name
                     if current_state == 0:
-                        now = dt.datetime.now()
+                        now = TimeManagerFactory.get_instance().get_current_time()
                         if not last_notify_time or (now - last_notify_time).seconds >= notify_cooldown:
                             if next_lesson_name != None:
                                     notification.push_notification(3, next_lesson_name)
@@ -437,7 +453,7 @@ def get_next_lessons() -> None:
     global next_lessons
     next_lessons = []
     part = 0
-    current_dt = dt.datetime.combine(today, dt.datetime.strptime(current_time, '%H:%M:%S').time())  # 当前时间
+    current_dt = TimeManagerFactory.get_instance().get_current_time()  # 当前时间
 
     if parts_start_time:
         c_time, part = get_part()
@@ -446,7 +462,12 @@ def get_next_lessons() -> None:
             if part == 0 or part == 3:
                 return True
             else:
-                if current_dt >= parts_start_time[part] - dt.timedelta(minutes=60):
+                if current_dt >= TimeManagerFactory.get_instance().get_current_time().replace(
+                    hour=parts_start_time[part].hour, 
+                    minute=parts_start_time[part].minute, 
+                    second=parts_start_time[part].second, 
+                    microsecond=parts_start_time[part].microsecond
+                ) - dt.timedelta(minutes=60):
                     return True
                 else:
                     return False
@@ -473,7 +494,7 @@ def get_next_lessons_text() -> str:
 # 获取当前活动
 def get_current_lesson_name() -> None:
     global current_lesson_name, current_state
-    current_dt = dt.datetime.combine(today, dt.datetime.strptime(current_time, '%H:%M:%S').time())  # 当前时间
+    current_dt = TimeManagerFactory.get_instance().get_current_time()  # 当前时间
     current_lesson_name = '暂无课程'
     current_state = 0
 
@@ -715,7 +736,7 @@ class PluginManager:  # 插件管理器
             "Timeline_Data": timeline_data,  # 时间线数据
             "Parts_Start_Time": parts_start_time,  # 节点开始时间
             "Parts_Type": parts_type,  # 节点类型
-            "Time_Offset": time_offset,  # 时差偏移
+            "Time_Offset": TimeManagerFactory.get_instance().get_time_offset(),  # 时差偏移
 
             "Schedule_Name": config_center.schedule_name,  # 课程表名称
             "Loaded_Data": loaded_data,  # 加载的课程表数据
@@ -860,7 +881,7 @@ class WidgetsManager:
     def init_widgets(self) -> None:  # 初始化小组件
         self.widgets_list = list_.get_widget_config()
         self.check_widgets_exist()
-        self.spacing = conf.load_theme_config(theme)['spacing']
+        self.spacing = conf.load_theme_config(theme).config.spacing
 
         self.get_start_pos()
         cnt_all = {}
@@ -888,15 +909,16 @@ class WidgetsManager:
 
     @staticmethod
     def get_widget_width(path: str) -> int:
-        try:
-            width = conf.load_theme_width(theme)[path]
-        except KeyError:
-            width = list_.widget_width[path]
-        return int(width)
+        return (
+            load_theme_config(str('default' if theme is None else theme))
+            .config
+            .widget_width
+            .get(path, list_.widget_width.get(path, 0))
+        )
 
     @staticmethod
     def get_widgets_height() -> int:
-        return int(conf.load_theme_config(theme)['height'])
+        return conf.load_theme_config(theme).config.height
 
     def create_widgets(self) -> None:
         for widget in self.widgets:
@@ -919,12 +941,14 @@ class WidgetsManager:
         self.get_start_pos()
         pos_x = self.start_pos_x + self.spacing * num
         for i in range(num):
-            try:
-                pos_x += conf.load_theme_width(theme)[self.widgets_list[i]]
-            except KeyError:
-                pos_x += list_.widget_width[self.widgets_list[i]]
-            except:
-                pos_x += 0
+            widget = self.widgets_list[i]
+            pos_x += (
+                conf
+                .load_theme_config(str('default' if theme is None else theme))
+                .config
+                .widget_width
+                .get(widget, list_.widget_width.get(widget, 0))
+            )
         return [int(pos_x), int(self.start_pos_y)]
 
     def get_start_pos(self) -> None:
@@ -1319,13 +1343,16 @@ class FloatingWidget(QWidget):  # 浮窗
 
     def init_ui(self):
         setTheme_()
-        if os.path.exists(f'{base_directory}/ui/{theme}/widget-floating.ui'):
-            if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:
-                uic.loadUi(f'{base_directory}/ui/{theme}/dark/widget-floating.ui', self)
+        theme_info = conf.load_theme_config(str('default' if theme is None else theme))
+        theme_path = theme_info.path
+        theme_config = theme_info.config
+        if (theme_path / 'widget-floating.ui').exists():
+            if isDarkTheme() and theme_config.support_dark_mode:
+                uic.loadUi(theme_path / 'dark/widget-floating.ui', self)
             else:
-                uic.loadUi(f'{base_directory}/ui/{theme}/widget-floating.ui', self)
+                uic.loadUi(theme_path / 'widget-floating.ui', self)
         else:
-            if isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']:
+            if isDarkTheme() and theme_config.support_dark_mode:
                 uic.loadUi(f'{base_directory}/ui/default/dark/widget-floating.ui', self)
             else:
                 uic.loadUi(f'{base_directory}/ui/default/widget-floating.ui', self)
@@ -1655,9 +1682,9 @@ class DesktopWidget(QWidget):  # 主要小组件
 
         self.last_widgets = list_.get_widget_config()
         self.path = path
-
+        theme_config = conf.load_theme_config(str('default' if theme is None else theme)).config
         self.last_code = 101010100
-        self.radius = conf.load_theme_config(theme)['radius']
+        self.radius = theme_config.radius
         self.last_theme = config_center.read_conf('General', 'theme')
         self.last_color_mode = config_center.read_conf('General', 'color_mode')
         self.w = 100
@@ -1675,10 +1702,10 @@ class DesktopWidget(QWidget):  # 主要小组件
         self._is_topmost_callback_added = False # 添加一个标志来跟踪回调是否已添加
 
         try:
-            self.w = conf.load_theme_config(theme)['widget_width'][self.path]
+            self.w = theme_config.widget_width[self.path]
         except KeyError:
             self.w = list_.widget_width[self.path]
-        self.h = conf.load_theme_config(theme)['height']
+        self.h = theme_config.height
 
         init_config()
         self.init_ui(path)
@@ -1810,22 +1837,19 @@ class DesktopWidget(QWidget):  # 主要小组件
             logger.error(f"更新插件小组件时出错：{e}")
 
     def init_ui(self, path: str) -> None:
-        if conf.load_theme_config(theme)['support_dark_mode']:
-            if os.path.exists(f'{base_directory}/ui/{theme}/{path}'):
-                if isDarkTheme():
-                    uic.loadUi(f'{base_directory}/ui/{theme}/dark/{path}', self)
-                else:
-                    uic.loadUi(f'{base_directory}/ui/{theme}/{path}', self)
+        theme_info = conf.load_theme_config(str('default' if theme is None else theme))
+        theme_config = theme_info.config
+        theme_path = theme_info.path
+        if (theme_path / path).exists():
+            if theme_config.support_dark_mode and isDarkTheme():
+                uic.loadUi(theme_path / 'dark' / path, self)
             else:
-                if isDarkTheme():
-                    uic.loadUi(f'{base_directory}/ui/{theme}/dark/widget-base.ui', self)
-                else:
-                    uic.loadUi(f'{base_directory}/ui/{theme}/widget-base.ui', self)
+                uic.loadUi(theme_path / path, self)
         else:
-            if os.path.exists(f'{base_directory}/ui/{theme}/{path}'):
-                uic.loadUi(f'{base_directory}/ui/{theme}/{path}', self)
+            if theme_config.support_dark_mode and isDarkTheme():
+                uic.loadUi(theme_path / 'dark/widget-base.ui', self)
             else:
-                uic.loadUi(f'{base_directory}/ui/{theme}/widget-base.ui', self)
+                uic.loadUi(theme_path / 'widget-base.ui', self)
 
         # 设置窗口无边框和透明背景
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -1935,7 +1959,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # 添加阴影效果
-        if conf.load_theme_config(theme)['shadow']:  # 修改阴影问题
+        if conf.load_theme_config(str('default' if theme is None else theme)).config.shadow:  # 修改阴影问题
             shadow_effect = QGraphicsDropShadowEffect(self)
             shadow_effect.setBlurRadius(28)
             shadow_effect.setXOffset(0)
@@ -2016,12 +2040,10 @@ class DesktopWidget(QWidget):  # 主要小组件
             self.open_extra_menu()
 
     def update_data(self, path: str = '') -> None:
-        global current_time, current_week, start_y, time_offset, today
+        global current_time, current_week, start_y, today
 
-        today = dt.date.today()
-        current_time = dt.datetime.now().strftime('%H:%M:%S')
-        time_offset = conf.get_time_offset()
-
+        today = TimeManagerFactory.get_instance().get_today()
+        current_time = TimeManagerFactory.get_instance().get_current_time_str('%H:%M:%S')
         get_start_time()
         get_current_lessons()
         get_current_lesson_name()
@@ -2049,7 +2071,7 @@ class DesktopWidget(QWidget):  # 主要小组件
         if conf.is_temp_week():  # 调休日
             current_week = config_center.read_conf('Temp', 'set_week')
         else:
-            current_week = dt.datetime.now().weekday()
+            current_week = TimeManagerFactory.get_instance().get_current_weekday()
         
         cd_list = get_countdown()
 
@@ -2075,8 +2097,9 @@ class DesktopWidget(QWidget):  # 主要小组件
 
             painter = QPainter(pixmap)
             render.render(painter)
-            if (isDarkTheme() and conf.load_theme_config(theme)['support_dark_mode']
-                    or isDarkTheme() and conf.load_theme_config(theme)['default_theme'] == 'dark'):  # 在暗色模式显示亮色图标
+            theme_config = conf.load_theme_config(str('default' if theme is None else theme)).config
+            if (isDarkTheme() and theme_config.support_dark_mode
+                    or isDarkTheme() and theme_config.default_theme == 'dark'):  # 在暗色模式显示亮色图标
                 painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
                 painter.fillRect(pixmap.rect(), QColor("#FFFFFF"))
             painter.end()
@@ -2773,10 +2796,7 @@ def init() -> None:
     global theme, radius, mgr, screen_width, first_start, fw, was_floating_mode
     update_timer.remove_all_callbacks()
 
-    theme = config_center.read_conf('General', 'theme')  # 主题
-    if not os.path.exists(f'{base_directory}/ui/{theme}/theme.json'):
-        logger.warning(f'主题 {theme} 不存在，使用默认主题')
-        theme = 'default'
+    theme = load_theme_config(config_center.read_conf('General', 'theme')).path.name # 主题
     logger.info(f'应用主题：{theme}')
 
     mgr = WidgetsManager()
@@ -2941,7 +2961,7 @@ if __name__ == '__main__':
 
         # w = ErrorDialog()
         # w.exec()
-        if config_center.read_conf('Version', 'auto_check_update') == '1':
+        if config_center.read_conf('Version', 'auto_check_update', '1') == '1':
             check_update()
 
     status = app.exec()
