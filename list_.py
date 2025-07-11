@@ -1,74 +1,82 @@
 import json
 import os
 from copy import deepcopy
-from shutil import copy
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from shutil import copy
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from loguru import logger
+
+from basic_dirs import THEME_DIRS
+from data_model import ThemeConfig, ThemeInfo
 from file import base_directory, config_center, save_data_to_json
 
-week = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-week_type = ['单周', '双周']
-part_type = ['节点', '休息段']
-window_status = ['无', '置于顶部', '置于底部']
-color_mode = ['浅色', '深色', '跟随系统']
-hide_mode = ['无', '上课时自动隐藏', '窗口最大化时隐藏', '灵活隐藏']
-non_nt_hide_mode = ['无', '上课时自动隐藏']
-version_channel = ['正式版 (Release)', '测试版 (Beta)']
+from PyQt5.QtCore import QCoreApplication
+
+
+week = [QCoreApplication.translate("list_", '周一'), QCoreApplication.translate("list_", '周二'), QCoreApplication.translate("list_", '周三'), QCoreApplication.translate("list_", '周四'), QCoreApplication.translate("list_", '周五'), QCoreApplication.translate("list_", '周六'), QCoreApplication.translate("list_", '周日')]
+logger.debug(week)
+month = [QCoreApplication.translate("list_", '一月'), QCoreApplication.translate("list_", '二月'), QCoreApplication.translate("list_", '三月'), QCoreApplication.translate("list_", '四月'), QCoreApplication.translate("list_", '五月'), QCoreApplication.translate("list_", '六月'), QCoreApplication.translate("list_", '七月'), QCoreApplication.translate("list_", '八月'), QCoreApplication.translate("list_", '九月'), QCoreApplication.translate("list_", '十月'), QCoreApplication.translate("list_", '十一月'), QCoreApplication.translate("list_", '十二月')]
+week_type = [QCoreApplication.translate("list_", '单周'), QCoreApplication.translate("list_", '双周')]
+part_type = [QCoreApplication.translate("list_", '节点'), QCoreApplication.translate("list_", '休息段')]
+window_status = [QCoreApplication.translate("list_", '无'), QCoreApplication.translate("list_", '置于顶部'), QCoreApplication.translate("list_", '置于底部')]
+color_mode = [QCoreApplication.translate("list_", '浅色'), QCoreApplication.translate("list_", '深色'), QCoreApplication.translate("list_", '跟随系统')]
+hide_mode = [QCoreApplication.translate("list_", '无'), QCoreApplication.translate("list_", '上课时自动隐藏'), QCoreApplication.translate("list_", '窗口最大化时隐藏'), QCoreApplication.translate("list_", '灵活隐藏')]
+non_nt_hide_mode = [QCoreApplication.translate("list_", '无'), QCoreApplication.translate("list_", '上课时自动隐藏')]
+version_channel = [QCoreApplication.translate("list_", '正式版 (Release)'), QCoreApplication.translate("list_", '测试版 (Beta)')]
 
 theme_folder = []
 theme_names = []
 
 subject = {
-    '语文': '(255, 151, 135',  # 红
-    '数学': '(105, 84, 255',  # 蓝
-    '英语': '(236, 135, 255',  # 粉
-    '生物': '(68, 200, 94',  # 绿
-    '地理': '(80, 214, 200',  # 浅蓝
-    '政治': '(255, 110, 110',  # 红
-    '历史': '(180, 130, 85',  # 棕
-    '物理': '(130, 85, 180',  # 紫
-    '化学': '(84, 135, 190',  # 蓝
-    '美术': '(0, 186, 255',  # 蓝
-    '音乐': '(255, 101, 158',  # 红
-    '体育': '(255, 151, 135',  # 红
-    '信息技术': '(84, 135, 190',  # 蓝
-    '电脑': '(84, 135, 190',  # 蓝
-    '课程表未加载': '(255, 151, 135',  # 红
+    QCoreApplication.translate("list_", '语文'): '(255, 151, 135',  # 红
+    QCoreApplication.translate("list_", '数学'): '(105, 84, 255',  # 蓝
+    QCoreApplication.translate("list_", '英语'): '(236, 135, 255',  # 粉
+    QCoreApplication.translate("list_", '生物'): '(68, 200, 94',  # 绿
+    QCoreApplication.translate("list_", '地理'): '(80, 214, 200',  # 浅蓝
+    QCoreApplication.translate("list_", '政治'): '(255, 110, 110',  # 红
+    QCoreApplication.translate("list_", '历史'): '(180, 130, 85',  # 棕
+    QCoreApplication.translate("list_", '物理'): '(130, 85, 180',  # 紫
+    QCoreApplication.translate("list_", '化学'): '(84, 135, 190',  # 蓝
+    QCoreApplication.translate("list_", '美术'): '(0, 186, 255',  # 蓝
+    QCoreApplication.translate("list_", '音乐'): '(255, 101, 158',  # 红
+    QCoreApplication.translate("list_", '体育'): '(255, 151, 135',  # 红
+    QCoreApplication.translate("list_", '信息技术'): '(84, 135, 190',  # 蓝
+    QCoreApplication.translate("list_", '电脑'): '(84, 135, 190',  # 蓝
+    QCoreApplication.translate("list_", '课程表未加载'): '(255, 151, 135',  # 红
 
-    '班会': '(255, 151, 135',  # 红
-    '自习': '(115, 255, 150',  # 绿
-    '课间': '(135, 255, 191',  # 绿
-    '大课间': '(255, 151, 135',  # 红
-    '放学': '(84, 255, 101',  # 绿
-    '暂无课程': '(84, 255, 101',  # 绿
+    QCoreApplication.translate("list_", '班会'): '(255, 151, 135',  # 红
+    QCoreApplication.translate("list_", '自习'): '(115, 255, 150',  # 绿
+    QCoreApplication.translate("list_", '课间'): '(135, 255, 191',  # 绿
+    QCoreApplication.translate("list_", '大课间'): '(255, 151, 135',  # 红
+    QCoreApplication.translate("list_", '放学'): '(84, 255, 101',  # 绿
+    QCoreApplication.translate("list_", '暂无课程'): '(84, 255, 101',  # 绿
 }
 
 schedule_dir = os.path.join(base_directory, 'config', 'schedule')
 
-class_activity = ['课程', '课间']
-time = ['上午', '下午', '晚修']
+class_activity = [QCoreApplication.translate("list_", '课程'), QCoreApplication.translate("list_", '课间')]
+time = [QCoreApplication.translate("list_", '上午'), QCoreApplication.translate("list_", '下午'), QCoreApplication.translate("list_", '晚修')]
 class_kind = [
-    '自定义',
-    '语文',
-    '数学',
-    '英语',
-    '政治',
-    '历史',
-    '生物',
-    '地理',
-    '物理',
-    '化学',
-    '体育',
-    '班会',
-    '自习',
-    '早读',
-    '大课间',
-    '美术',
-    '音乐',
-    '心理',
-    '信息技术'
+    QCoreApplication.translate("list_", '自定义'),
+    QCoreApplication.translate("list_", '语文'),
+    QCoreApplication.translate("list_", '数学'),
+    QCoreApplication.translate("list_", '英语'),
+    QCoreApplication.translate("list_", '政治'),
+    QCoreApplication.translate("list_", '历史'),
+    QCoreApplication.translate("list_", '生物'),
+    QCoreApplication.translate("list_", '地理'),
+    QCoreApplication.translate("list_", '物理'),
+    QCoreApplication.translate("list_", '化学'),
+    QCoreApplication.translate("list_", '体育'),
+    QCoreApplication.translate("list_", '班会'),
+    QCoreApplication.translate("list_", '自习'),
+    QCoreApplication.translate("list_", '早读'),
+    QCoreApplication.translate("list_", '大课间'),
+    QCoreApplication.translate("list_", '美术'),
+    QCoreApplication.translate("list_", '音乐'),
+    QCoreApplication.translate("list_", '心理'),
+    QCoreApplication.translate("list_", '信息技术')
 ]
 
 default_widgets = [
@@ -79,7 +87,7 @@ default_widgets = [
 ]
 
 widget_width = {  # 默认宽度
-    'widget-time.ui': 210,
+    'widget-time.ui': 230,
     'widget-countdown.ui': 200,
     'widget-current-activity.ui': 360,
     'widget-next-activity.ui': 290,
@@ -88,81 +96,103 @@ widget_width = {  # 默认宽度
 }
 
 widget_conf = {
-    '当前日期': 'widget-time.ui',
-    '活动倒计时': 'widget-countdown.ui',
-    '当前活动': 'widget-current-activity.ui',
-    '更多活动': 'widget-next-activity.ui',
-    '倒计日': 'widget-countdown-day.ui',
-    '天气': 'widget-weather.ui'
+    QCoreApplication.translate("list_", '当前日期'): 'widget-time.ui',
+    QCoreApplication.translate("list_", '活动倒计时'): 'widget-countdown.ui',
+    QCoreApplication.translate("list_", '当前活动'): 'widget-current-activity.ui',
+    QCoreApplication.translate("list_", '更多活动'): 'widget-next-activity.ui',
+    QCoreApplication.translate("list_", '倒计日'): 'widget-countdown-day.ui',
+    QCoreApplication.translate("list_", '天气'): 'widget-weather.ui'
 }
 
 widget_name = {
-    'widget-time.ui': '当前日期',
-    'widget-countdown.ui': '活动倒计时',
-    'widget-current-activity.ui': '当前活动',
-    'widget-next-activity.ui': '更多活动',
-    'widget-countdown-day.ui': '倒计日',
-    'widget-weather.ui': '天气'
+    'widget-time.ui': QCoreApplication.translate("list_", '当前日期'),
+    'widget-countdown.ui': QCoreApplication.translate("list_", '活动倒计时'),
+    'widget-current-activity.ui': QCoreApplication.translate("list_", '当前活动'),
+    'widget-next-activity.ui': QCoreApplication.translate("list_", '更多活动'),
+    'widget-countdown-day.ui': QCoreApplication.translate("list_", '倒计日'),
+    'widget-weather.ui': QCoreApplication.translate("list_", '天气')
 }
 
 native_widget_name = [widget_name[i] for i in widget_name]
 
-schedule_dbs = {
-    '@hpd': 'https://cwkv.hpdnya.com'
-}
+not_exist_themes = []
+
+try:
+    with open(base_directory / "config" / "schedule_db.json") as f:
+        schedule_dbs = json.load(f).get('db', {})
+except:
+    logger.warning("读取数据库列表失败，重置为空。")
+    schedule_dbs = {}
+
+def validate_theme(folder: Path) -> Optional[ThemeInfo]:
+    file_path = folder / 'theme.json'
+    if not file_path.exists():
+        return None
+    try:
+        with file_path.open('r', encoding='utf-8') as f:
+            return ThemeInfo(
+                path=folder,
+                config=ThemeConfig.model_validate_json(f.read())
+            )
+    except Exception as e:
+        logger.error(f'验证主题配置文件发生错误：{e}')
+        return None
+
+
+def __collect_themes(it: Iterable[Tuple[str, ThemeInfo]]) -> Dict[str, ThemeInfo]:
+    themes: Dict[str, ThemeInfo] = {}
+    for name, info in it:
+        if name in themes:
+            logger.warning(f'主题 {name} - {themes[name].path} 已存在，{info.path} 将覆盖原有配置')
+        themes[name] = info
+    return themes
+
 
 try:  # 加载课程/主题配置文件
     subject_info = json.load(open(f'{base_directory}/config/data/subject.json', 'r', encoding='utf-8'))
     subject_icon = subject_info['subject_icon']
     subject_abbreviation = subject_info['subject_abbreviation']
-    theme_folder = [f for f in os.listdir(f'{base_directory}/ui/')
-                    if os.path.isdir(os.path.join(f'{base_directory}/ui/', f))]
+    __theme = __collect_themes(
+        (dir.name, info)
+        for root_dir in reversed(THEME_DIRS)
+        for dir in root_dir.iterdir()
+        if (info := validate_theme(dir)) is not None
+    )
+    theme_folder = list(folder.path.name for folder in __theme.values())
+    theme_names = list(folder.config.name for folder in __theme.values())
 except Exception as e:
     logger.error(f'加载课程/主题配置文件发生错误，使用默认配置：{e}')
     config_center.write_conf('General', 'theme', 'default')
     subject_icon = {
-        '语文': 'chinese',
-        '数学': 'math',
-        '英语': 'abc',
-        '生物': 'biology',
-        '地理': 'geography',
-        '政治': 'chinese',
-        '历史': 'history',
-        '物理': 'physics',
-        '化学': 'chemistry',
-        '美术': 'art',
-        '音乐': 'music',
-        '体育': 'pe',
-        '信息技术': 'it',
-        '电脑': 'it',
-        '课程表未加载': 'xmark',
+        QCoreApplication.translate("list_", '语文'): 'chinese',
+        QCoreApplication.translate("list_", '数学'): 'math',
+        QCoreApplication.translate("list_", '英语'): 'abc',
+        QCoreApplication.translate("list_", '生物'): 'biology',
+        QCoreApplication.translate("list_", '地理'): 'geography',
+        QCoreApplication.translate("list_", '政治'): 'chinese',
+        QCoreApplication.translate("list_", '历史'): 'history',
+        QCoreApplication.translate("list_", '物理'): 'physics',
+        QCoreApplication.translate("list_", '化学'): 'chemistry',
+        QCoreApplication.translate("list_", '美术'): 'art',
+        QCoreApplication.translate("list_", '音乐'): 'music',
+        QCoreApplication.translate("list_", '体育'): 'pe',
+        QCoreApplication.translate("list_", '信息技术'): 'it',
+        QCoreApplication.translate("list_", '电脑'): 'it',
+        QCoreApplication.translate("list_", '课程表未加载'): 'xmark',
 
-        '班会': 'meeting',
-        '自习': 'self_study',
-        '课间': 'break',
-        '大课间': 'pe',
-        '放学': 'after_school',
-        '暂无课程': 'break',
+        QCoreApplication.translate("list_", '班会'): 'meeting',
+        QCoreApplication.translate("list_", '自习'): 'self_study',
+        QCoreApplication.translate("list_", '课间'): 'break',
+        QCoreApplication.translate("list_", '大课间'): 'pe',
+        QCoreApplication.translate("list_", '放学'): 'after_school',
+        QCoreApplication.translate("list_", '暂无课程'): 'break',
     }
     # 简称
     subject_abbreviation = {
-        '历史': '史'
+        QCoreApplication.translate("list_", '历史'): '史'
     }
 
-not_exist_themes = []
-
-countdown_modes = ['轮播', '多小组件']
-
-for folder in theme_folder:
-    try:
-        json_file = json.load(open(f'{base_directory}/ui/{folder}/theme.json', 'r', encoding='utf-8'))
-        theme_names.append(json_file['name'])
-    except Exception as e:
-        logger.error(f'加载主题文件 theme.json {folder} 发生错误，跳过：{e}')
-        not_exist_themes.append(folder)
-
-for folder in not_exist_themes:
-    theme_folder.remove(folder)
+countdown_modes = [QCoreApplication.translate("list_", '轮播'), QCoreApplication.translate("list_", '多小组件')]
 
 
 def get_widget_list() -> List[str]:
@@ -324,7 +354,7 @@ def export_schedule(filepath: str, filename: str) -> bool:  # 导出课表
         return False
 
 
-def get_widget_config() -> Dict[str, Any]:
+def get_widget_config() -> List[str]:
     try:
         if os.path.exists(f'{base_directory}/config/widget.json'):
             with open(f'{base_directory}/config/widget.json', 'r', encoding='utf-8') as file:
