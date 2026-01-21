@@ -149,7 +149,6 @@ dark_mode_watcher = None
 was_floating_mode = False  # 浮窗状态
 
 
-@logger.catch
 def global_exceptHook(exc_type: type, exc_value: Exception, exc_tb: Any) -> None:
     if config_center.read_conf('Other', 'safe_mode') == '1':
         return
