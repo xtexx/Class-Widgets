@@ -2778,14 +2778,14 @@
         <translation>./config.ini に保存されました</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6319"/>
+        <location filename="../menu.py" line="6320"/>
         <source>界面语言已切换为 {selected_lang_name}
 新语言将在重启程序后完全生效</source>
         <translation>インターフェース言語が {selected_lang_name} に切り替えられました
 新しい言語はプログラム再起動後に完全に反映されます</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6359"/>
+        <location filename="../menu.py" line="6360"/>
         <source>界面语言切换时出错: {e}</source>
         <translation>インターフェース言語の切り替え中にエラーが発生しました: {e}</translation>
     </message>
@@ -3164,39 +3164,39 @@
         <translation>この製品について</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6236"/>
+        <location filename="../menu.py" line="6237"/>
         <source>Class Widgets - 设置</source>
         <translation>Class Widgets - 設定</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6318"/>
+        <location filename="../menu.py" line="6319"/>
         <source>界面语言切换成功 ♪(´▽｀)</source>
         <translation>インターフェース言語の切り替えが完了しました ♪(´▽｀)</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6351"/>
+        <location filename="../menu.py" line="6352"/>
         <source>界面语言切换失败 (＃°Д°)</source>
         <translation>インターフェース言語の切り替えに失敗しました (＃°Д°)</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6352"/>
+        <location filename="../menu.py" line="6353"/>
         <source>无法加载选定的界面语言包，请检查翻译文件是否存在</source>
         <translation>選択されたインターフェース言語パックを読み込めません。翻訳ファイルが存在するかご確認ください</translation>
     </message>
     <message>
         <location filename="../menu.py" line="1906"/>
-        <location filename="../menu.py" line="6355"/>
-        <location filename="../menu.py" line="6365"/>
+        <location filename="../menu.py" line="6356"/>
+        <location filename="../menu.py" line="6366"/>
         <source>确定</source>
         <translation>はい</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6361"/>
+        <location filename="../menu.py" line="6362"/>
         <source>界面语言切换出错 (＃°Д°)</source>
         <translation>インターフェース言語の切り替えでエラーが発生しました (＃°Д°)</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6362"/>
+        <location filename="../menu.py" line="6363"/>
         <source>切换界面语言时发生错误: {e}</source>
         <translation>インターフェース言語の切り替え時にエラーが発生しました: {e}</translation>
     </message>

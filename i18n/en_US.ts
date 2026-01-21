@@ -2983,14 +2983,14 @@ Save failed. Please submit the logs in ./log/ to the developer to report the iss
         <translation>Weather</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6319"/>
+        <location filename="../menu.py" line="6320"/>
         <source>界面语言已切换为 {selected_lang_name}
 新语言将在重启程序后完全生效</source>
         <translation>Interface language has been switched to {selected_lang_name}.
 The new language will take full effect after restarting the program</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6359"/>
+        <location filename="../menu.py" line="6360"/>
         <source>界面语言切换时出错: {e}</source>
         <translation>Error switching interface language: {e}</translation>
     </message>
@@ -3398,12 +3398,12 @@ Saved to ./config.ini</translation>
         <translation>About This Product</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6236"/>
+        <location filename="../menu.py" line="6237"/>
         <source>Class Widgets - 设置</source>
         <translation>Class Widgets - Settings</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6318"/>
+        <location filename="../menu.py" line="6319"/>
         <source>界面语言切换成功 ♪(´▽｀)</source>
         <translation>Interface language switched successfully ♪(´▽｀)</translation>
     </message>
@@ -3416,19 +3416,19 @@ The interface language has been switched to {selected_lang_name}.
 The new language will take full effect after restarting the application.</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6351"/>
+        <location filename="../menu.py" line="6352"/>
         <source>界面语言切换失败 (＃°Д°)</source>
         <translation>Interface language switch failed (＃°Д°)</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6352"/>
+        <location filename="../menu.py" line="6353"/>
         <source>无法加载选定的界面语言包，请检查翻译文件是否存在</source>
         <translation>Failed to load the selected interface language pack. Please check if the translation file exists</translation>
     </message>
     <message>
         <location filename="../menu.py" line="1906"/>
-        <location filename="../menu.py" line="6355"/>
-        <location filename="../menu.py" line="6365"/>
+        <location filename="../menu.py" line="6356"/>
+        <location filename="../menu.py" line="6366"/>
         <source>确定</source>
         <translation>OK</translation>
     </message>
@@ -3439,12 +3439,12 @@ The new language will take full effect after restarting the application.</transl
 Error occurred while switching interface language: {e}</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6361"/>
+        <location filename="../menu.py" line="6362"/>
         <source>界面语言切换出错 (＃°Д°)</source>
         <translation>Interface language switch error (＃°Д°)</translation>
     </message>
     <message>
-        <location filename="../menu.py" line="6362"/>
+        <location filename="../menu.py" line="6363"/>
         <source>切换界面语言时发生错误: {e}</source>
         <translation>An error occurred while switching the interface language: {e}</translation>
     </message>
