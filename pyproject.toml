@@ -12,7 +12,7 @@ dependencies = [
   "configparser~=7.1.0",
   "darkdetect==0.8.0",
   "distro~=1.9.0; sys_platform == 'linux'",
-  "edge-tts==7.2.1",
+  "edge-tts~=7.2.7",
   "loguru~=0.7.2",
   "ntplib~=0.4.0",
   "packaging>=25.0",
@@ -39,44 +39,41 @@ requires-python = ">=3.8"
 version = "0.1.0"
 
 [tool.pyright]
-typeCheckingMode = "standard"
-pythonVersion = "3.8"
-useLibraryCodeForTypes = true
 autoImportCompletions = true
-
-include = ["**/*.py"]
 exclude = [
   "**/.venv",
-  "**/venv",
   "**/__pycache__",
   "**/node_modules",
+  "**/venv",
   "build",
   "dist"
 ]
-
+include = ["**/*.py"]
+pythonVersion = "3.8"
 reportArgumentType = "warning"
-reportGeneralTypeIssues = "warning"
+reportAttributeAccessIssue = "none"
 reportDuplicateImport = "warning"
+reportGeneralTypeIssues = "warning"
 reportImportCycles = "warning"
 reportIncompatibleMethodOverride = "warning"
 reportIncompatibleVariableOverride = "warning"
-reportOverlappingOverload = "warning"
-reportAttributeAccessIssue = "none"
-reportOptionalMemberAccess = "none"
-reportOptionalCall = "none"
-reportOptionalSubscript = "none"
-reportMissingTypeStubs = "none"
 reportMissingParameterType = "none"
-reportUnusedImport = "none"
-reportUnusedVariable = "none"
-reportUnusedFunction = "none"
-reportUnusedClass = "none"
+reportMissingTypeStubs = "none"
+reportOptionalCall = "none"
+reportOptionalMemberAccess = "none"
+reportOptionalSubscript = "none"
+reportOverlappingOverload = "warning"
 reportPrivateUsage = "none"
 reportSelfClsParameterName = "none"
+reportUnusedClass = "none"
+reportUnusedFunction = "none"
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
 strictDictionaryInference = false
 strictListInference = false
 strictSetInference = false
-
+typeCheckingMode = "standard"
+useLibraryCodeForTypes = true
 
 [[tool.pyright.executionEnvironments]]
 "extraPaths" = [".", "./config", "./ui", "./view"]
