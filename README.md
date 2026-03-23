@@ -1,3 +1,9 @@
+> [!CAUTION]
+> **停止维护公告**  
+> 我们很抱歉的通知，由于一些原因，本项目目前已经停止维护。  
+> 这意味着，在这期间本项目不会有新功能或 Bug 修复。现有代码和旧版本还会保留。  
+> 建议您尝试 [Class Widgets 2](https://github.com/RinLit-233-shiroko/Class-Widgets-2) 以获得更好的体验。
+
 <div align="right">
 简体中文 | <a href="/docs/readme/README.en_US.md">English</a> | <a href="/docs/readme/README.ja.md">日本語</a>
 </div>
